@@ -1,0 +1,52 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: quick-test
+spec:
+  template:
+    spec:
+      containers:
+      - name: quick-test
+        image: alpine/git:latest
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - |
+            apk add --no-cache bash bc time
+            
+            echo "=== Quick FSx Git Performance Check ==="
+            echo "Pod: $(hostname)"
+            echo "Start time: $(date)"
+            echo ""
+            
+            cd /mnt/fsx
+            rm -rf quick-test
+            mkdir -p quick-test
+            cd quick-test
+            
+            # Quick clone test
+            echo "Testing git clone performance..."
+            time git clone --depth 1 https://github.com/torvalds/linux.git test-repo
+            
+            # Quick operations test
+            echo "Testing git operations..."
+            cd test-repo
+            time git status
+            time git log --oneline -50
+            
+            echo ""
+            echo "Disk usage:"
+            df -h /mnt/fsx
+            du -sh /mnt/fsx/quick-test
+            
+            echo ""
+            echo "=== Quick test completed ==="
+        volumeMounts:
+        - name: fsx-storage
+          mountPath: /mnt/fsx
+      volumes:
+      - name: fsx-storage
+        persistentVolumeClaim:
+          claimName: fsx-lustre-claim
+      restartPolicy: Never
+  backoffLimit: 3

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fsx-lustre-claim
+spec:
+  accessModes:
+    - ReadWriteMany  # FSx for Lustre supports ReadWriteMany
+  storageClassName: fsx-lustre-sc
+  resources:
+    requests:
+      storage: 1200Gi  # Minimum size based on deployment type
